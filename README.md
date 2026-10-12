@@ -4,4 +4,6 @@
 
 - **Topics**: AI, Tilemaps, Sprites
 - **Version**: Unity 2021.3 (LTS)
-Credits: https://www.youtube.com/@Zigurous
+- **Credits**: https://github.com/adamgraham
+- [**Download**](https://github.com/zigurous/unity-pacman-tutorial/archive/refs/heads/main.zip)
+- [**Watch Video**](https://youtu.be/TKt_VlMn_aA)
