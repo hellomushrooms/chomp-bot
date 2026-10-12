@@ -1,10 +1,13 @@
 using UnityEngine;
 
+
 [RequireComponent(typeof(Movement))]
 public class Pacman : MonoBehaviour
 {
     [SerializeField]
     private AnimatedSprite deathSequence;
+    [SerializeField]
+    private bool agentControlled = false; // RL: tick this when ChompAgent plays (training and demo)
     private SpriteRenderer spriteRenderer;
     private CircleCollider2D circleCollider;
     private Movement movement;
@@ -19,17 +22,20 @@ public class Pacman : MonoBehaviour
     private void Update()
     {
         // Set the new direction based on the current input
-        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) {
-            movement.SetDirection(Vector2.up);
-        }
-        else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow)) {
-            movement.SetDirection(Vector2.down);
-        }
-        else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) {
-            movement.SetDirection(Vector2.left);
-        }
-        else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) {
-            movement.SetDirection(Vector2.right);
+        if (!agentControlled) // RL
+        {
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) {
+                movement.SetDirection(Vector2.up);
+            }
+            else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow)) {
+                movement.SetDirection(Vector2.down);
+            }
+            else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) {
+                movement.SetDirection(Vector2.left);
+            }
+            else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) {
+                movement.SetDirection(Vector2.right);
+            }
         }
 
         // Rotate pacman to face the movement direction

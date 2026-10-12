@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// MODIFIED from the tutorial. The only change: the queued turn is now tried in FixedUpdate
+// instead of Update. At high Time.timeScale during training, several physics steps run per frame,
+// so a turn checked only once per frame could be skipped.
 [RequireComponent(typeof(Rigidbody2D))]
 public class Movement : MonoBehaviour
 {
@@ -34,17 +37,15 @@ public class Movement : MonoBehaviour
         enabled = true;
     }
 
-    private void Update()
-    {
-        // Try to move in the next direction while it's queued to make movements
-        // more responsive
-        if (nextDirection != Vector2.zero) {
-            SetDirection(nextDirection);
-        }
-    }
+    // RL: the old Update() method was removed; its logic moved into FixedUpdate below
 
     private void FixedUpdate()
     {
+        // RL: try to move in the queued direction on every physics step
+        if (nextDirection != Vector2.zero) {
+            SetDirection(nextDirection);
+        }
+
         Vector2 position = rb.position;
         Vector2 translation = speed * speedMultiplier * Time.fixedDeltaTime * direction;
 
