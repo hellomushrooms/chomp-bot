@@ -111,36 +111,39 @@ public class GameManager : MonoBehaviour
     }
 
     public void PacmanEaten()
+{
+    if (lives <= 0) return; // NEW: ignore extra ghost collisions in the same physics step
+
+    // RL: training mode = no death animation, no 3 second wait
+    if (trainingMode)
     {
-        // RL: training mode = no death animation, no 3 second wait
-        if (trainingMode)
-        {
-            SetLives(lives - 1);
-            bool over = lives <= 0;
-
-            if (over) {
-                // Switch Pac-Man off so extra collisions cannot give a second penalty before the reset
-                pacman.gameObject.SetActive(false);
-            } else {
-                ResetState();
-            }
-
-            if (agent != null) agent.OnPacmanCaught(over);
-            return;
-        }
-
-        pacman.DeathSequence();
-
         SetLives(lives - 1);
+        bool over = lives <= 0;
 
-        if (agent != null) agent.OnPacmanCaught(lives <= 0); // RL
-
-        if (lives > 0) {
-            Invoke(nameof(ResetState), 3f);
+        if (over) {
+            // Switch Pac-Man off so extra collisions cannot give a second penalty before the reset
+            pacman.gameObject.SetActive(false);
         } else {
-            GameOver();
+            ResetState();
         }
+
+        if (agent != null) agent.OnPacmanCaught(over);
+        return;
     }
+
+    pacman.DeathSequence();
+
+    SetLives(lives - 1);
+    bool gameIsOver = lives <= 0; // NEW: remember this BEFORE the agent restarts the game
+
+    if (agent != null) agent.OnPacmanCaught(gameIsOver); // RL
+
+    if (gameIsOver) {
+        if (agent == null) GameOver(); // NEW: only human play shows Game Over; with an agent the episode already restarted
+    } else {
+        Invoke(nameof(ResetState), 3f);
+    }
+}
 
     public void GhostEaten(Ghost ghost)
     {
@@ -163,14 +166,13 @@ public class GameManager : MonoBehaviour
 
         if (!HasRemainingPellets())
         {
-            pacman.gameObject.SetActive(false);
+        pacman.gameObject.SetActive(false);
 
-            // RL: clearing the maze ends the episode; only human play waits and starts a new round
-            if (agent != null) agent.OnMazeCleared();
-
-            if (!trainingMode) {
-                Invoke(nameof(NewRound), 3f);
-            }
+        if (agent != null) {
+            agent.OnMazeCleared();       // ends the episode, which restarts the game at once
+        } else {
+            Invoke(nameof(NewRound), 3f); // human play only
+        }
         }
     }
 

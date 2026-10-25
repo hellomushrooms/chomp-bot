@@ -70,8 +70,21 @@ public class Movement : MonoBehaviour
 
     public bool Occupied(Vector2 direction)
     {
-        // If no collider is hit then there is no obstacle in that direction
-        RaycastHit2D hit = Physics2D.BoxCast(transform.position, Vector2.one * 0.75f, 0f, direction, 1.5f, obstacleLayer);
+        if (direction == Vector2.zero)
+            return false;
+
+        RaycastHit2D hit = Physics2D.BoxCast(
+            rb.position,
+            Vector2.one * 0.75f,
+            0f,
+            direction,
+            1.5f,
+            obstacleLayer
+        );
+
+        if (hit.collider != null)
+            Debug.Log($"Blocked {direction} by {hit.collider.name} at {hit.distance:F2}");
+
         return hit.collider != null;
     }
 

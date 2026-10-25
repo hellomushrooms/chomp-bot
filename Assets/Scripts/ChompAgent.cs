@@ -1,3 +1,4 @@
+using System.IO;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
@@ -34,11 +35,31 @@ public class ChompAgent : Agent
     private Pellet[] allPellets;
     private Vector2Int[] pelletCells;
 
+    // Per-episode statistics for the CSV log
+    private int pelletsEaten, ghostsEaten, stepCount;
+    private bool won;
+    private float episodeReward;
+    private string logPath = "";
+
     public override void Initialize()
     {
         movement = pacman.GetComponent<Movement>();
         obsBuffer = new float[ObservationSize];
         Debug.Log("ChompAgent: ObservationSize = " + ObservationSize + " (Behavior Parameters must match this)");
+        Debug.Log("ChompAgent: episode logs are written to " + Application.persistentDataPath);
+    }
+
+    private void AppendLog(string line)
+    {
+        if (!File.Exists(logPath))
+            File.WriteAllText(logPath, "score,pellets,ghosts,steps,won,reward\n");
+        File.AppendAllText(logPath, line + "\n");
+    }
+
+    private void Reward(float r)
+    {
+        AddReward(r);
+        episodeReward += r;
     }
 
     // ---------- Episode handling ----------
@@ -54,6 +75,17 @@ public class ChompAgent : Agent
         deathPenalty = p.GetWithDefault("death_penalty", deathPenalty);
         stepPenalty = p.GetWithDefault("step_penalty", stepPenalty);
 
+        int runId = (int)p.GetWithDefault("run_id", 0f);
+        logPath = Path.Combine(Application.persistentDataPath, "chompbot_run" + runId + ".csv");
+
+        // Log the episode that just ended (also covers Max Step endings)
+        if (stepCount > 0)
+        {
+            AppendLog(GameManager.Instance.score + "," + pelletsEaten + "," + ghostsEaten + "," +
+                      stepCount + "," + (won ? 1 : 0) + "," + episodeReward.ToString("F2"));
+        }
+        pelletsEaten = 0; ghostsEaten = 0; stepCount = 0; won = false; episodeReward = 0f;
+
         int seed = (int)p.GetWithDefault("seed", -1f);
         if (seed >= 0) Random.InitState(seed);
 
@@ -62,18 +94,28 @@ public class ChompAgent : Agent
 
     // Called by GameManager when game events happen. These are the RL rewards;
     // they are separate from the game's own score.
-    public void OnPelletEaten(bool isPowerPellet) => AddReward(isPowerPellet ? powerPelletReward : pelletReward);
-    public void OnGhostEaten() => AddReward(ghostReward);
+    public void OnPelletEaten(bool isPowerPellet)
+    {
+        pelletsEaten++;
+        Reward(isPowerPellet ? powerPelletReward : pelletReward);
+    }
+
+    public void OnGhostEaten()
+    {
+        ghostsEaten++;
+        Reward(ghostReward);
+    }
 
     public void OnPacmanCaught(bool gameOver)
     {
-        AddReward(deathPenalty);
+        Reward(deathPenalty);
         if (gameOver) EndEpisode();
     }
 
     public void OnMazeCleared()
     {
-        AddReward(winReward);
+        won = true;
+        Reward(winReward);
         EndEpisode();
     }
 
@@ -154,7 +196,8 @@ public class ChompAgent : Agent
     public override void OnActionReceived(ActionBuffers actions)
     {
         ApplyAction(actions.DiscreteActions[0]);
-        AddReward(stepPenalty);
+        stepCount++;
+        Reward(stepPenalty);
     }
 
     // Public so the demo mode can call it with the model's chosen action.
@@ -174,11 +217,17 @@ public class ChompAgent : Agent
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var d = actionsOut.DiscreteActions;
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) d[0] = 0;
-        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) d[0] = 1;
-        else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) d[0] = 2;
-        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) d[0] = 3;
-        else d[0] = 4;
+
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+            d[0] = 0;
+        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+            d[0] = 1;
+        else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+            d[0] = 2;
+        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+            d[0] = 3;
+        else
+            d[0] = 4;
     }
 
     // Shows the current episode reward in the top-left of the Game view (debug only).
@@ -206,11 +255,21 @@ public class ChompAgent : Agent
                         Gizmos.DrawCube(origin + new Vector2(x + 0.5f, y + 0.5f), Vector3.one * 0.9f);
         }
 
-        if (pelletCells != null)
-        {
+        if (allPellets != null && pelletCells != null){
             Gizmos.color = new Color(0f, 1f, 0f, 0.6f);
-            foreach (Vector2Int c in pelletCells)
-                Gizmos.DrawCube(origin + new Vector2(c.x + 0.5f, c.y + 0.5f), Vector3.one * 0.3f);
+
+            for (int i = 0; i < allPellets.Length; i++)
+            {
+                if (allPellets[i] == null || !allPellets[i].gameObject.activeInHierarchy)
+                    continue;
+
+                Vector2Int c = pelletCells[i];
+
+                Gizmos.DrawCube(
+                    origin + new Vector2(c.x + 0.5f, c.y + 0.5f),
+                    Vector3.one * 0.3f
+                );
+            }
         }
     }
 }
