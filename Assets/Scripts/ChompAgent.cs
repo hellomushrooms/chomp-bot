@@ -66,6 +66,7 @@ public class ChompAgent : Agent
 
     public override void OnEpisodeBegin()
     {
+        // Debug.Log("NEW EPISODE STARTED");
         // Let Python change rewards and the random seed between runs (reward-shaping experiment, fixed evaluation seeds)
         var p = Academy.Instance.EnvironmentParameters;
         pelletReward = p.GetWithDefault("pellet_reward", pelletReward);
@@ -271,5 +272,10 @@ public class ChompAgent : Agent
                 );
             }
         }
+    }
+    [ContextMenu("Open Log Folder")]
+    private void OpenLogFolder()
+    {
+        Application.OpenURL(Application.persistentDataPath);
     }
 }

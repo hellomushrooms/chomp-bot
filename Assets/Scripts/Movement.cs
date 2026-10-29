@@ -1,8 +1,5 @@
 using UnityEngine;
 
-// MODIFIED from the tutorial. The only change: the queued turn is now tried in FixedUpdate
-// instead of Update. At high Time.timeScale during training, several physics steps run per frame,
-// so a turn checked only once per frame could be skipped.
 [RequireComponent(typeof(Rigidbody2D))]
 public class Movement : MonoBehaviour
 {
@@ -37,11 +34,9 @@ public class Movement : MonoBehaviour
         enabled = true;
     }
 
-    // RL: the old Update() method was removed; its logic moved into FixedUpdate below
 
     private void FixedUpdate()
     {
-        // RL: try to move in the queued direction on every physics step
         if (nextDirection != Vector2.zero) {
             SetDirection(nextDirection);
         }
@@ -54,9 +49,6 @@ public class Movement : MonoBehaviour
 
     public void SetDirection(Vector2 direction, bool forced = false)
     {
-        // Only set the direction if the tile in that direction is available
-        // otherwise we set it as the next direction so it'll automatically be
-        // set when it does become available
         if (forced || !Occupied(direction))
         {
             this.direction = direction;
@@ -73,19 +65,14 @@ public class Movement : MonoBehaviour
         if (direction == Vector2.zero)
             return false;
 
-        RaycastHit2D hit = Physics2D.BoxCast(
+        return Physics2D.BoxCast(
             rb.position,
             Vector2.one * 0.75f,
             0f,
             direction,
             1.5f,
             obstacleLayer
-        );
-
-        if (hit.collider != null)
-            Debug.Log($"Blocked {direction} by {hit.collider.name} at {hit.distance:F2}");
-
-        return hit.collider != null;
+        ).collider != null;
     }
 
 }

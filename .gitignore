@@ -69,3 +69,14 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+python/chomp-env/
+python/runs/
+python/__pycache__/
+python/*.pt
+Builds/
+python/chomp310/
+python/chomp310-compatible/
+
+/ChompBot.app/
+/Pacman_BurstDebugInformation_DoNotShip/

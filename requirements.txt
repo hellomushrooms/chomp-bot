@@ -1,0 +1,25 @@
+# ChompBot: Python dependencies
+# Recommended environment: Python 3.10.x (Apple Silicon Mac)
+
+# Numerical computing / custom DQN
+numpy<2
+torch
+
+# Unity ML-Agents 2.0.2 connection layer (not the mlagents-learn trainer)
+mlagents_envs==0.26.0
+
+# Compatibility pins for the older ML-Agents connection layer
+protobuf==3.20.3
+grpcio
+cloudpickle
+Pillow
+PyYAML
+
+# Experiment logging, plots, and data analysis
+tensorboard<2.15
+matplotlib
+pandas
+seaborn
+
+#Unity version: Unity 2021.3
+#Unity library: ml-agents
